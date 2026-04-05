@@ -36,7 +36,7 @@ export default function NoteEditor({ note, onSave, onCancel }: NoteEditorProps) 
         placeholder="Заголовок заметки..."
         value={title}
         onChange={(e) => setTitle(e.target.value)}
-        className="w-full text-2xl font-bold px-6 py-4 bg-transparent border-b outline-none placeholder:opacity-50"
+        className="w-full text-xl md:text-2xl font-bold px-4 md:px-6 py-3 md:py-4 bg-transparent border-b outline-none placeholder:opacity-50"
         style={{ borderColor: "var(--border)", color: "var(--foreground)" }}
         autoFocus
       />
@@ -44,17 +44,17 @@ export default function NoteEditor({ note, onSave, onCancel }: NoteEditorProps) 
         placeholder="Начните писать..."
         value={content}
         onChange={(e) => setContent(e.target.value)}
-        className="flex-1 w-full px-6 py-4 bg-transparent outline-none resize-none text-base leading-relaxed placeholder:opacity-50"
+        className="flex-1 w-full px-4 md:px-6 py-3 md:py-4 bg-transparent outline-none resize-none text-base leading-relaxed placeholder:opacity-50"
         style={{ color: "var(--foreground)" }}
       />
       <div
-        className="flex gap-3 px-6 py-4 border-t"
+        className="flex gap-3 px-4 md:px-6 py-3 md:py-4 border-t"
         style={{ borderColor: "var(--border)" }}
       >
         <button
           type="submit"
           disabled={!title.trim()}
-          className="px-5 py-2 rounded-lg text-white font-medium transition-colors disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
+          className="flex-1 md:flex-none px-5 py-2.5 rounded-lg text-white font-medium transition-colors disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
           style={{ backgroundColor: "var(--accent)" }}
           onMouseEnter={(e) =>
             (e.currentTarget.style.backgroundColor = "var(--accent-hover)")
@@ -68,7 +68,7 @@ export default function NoteEditor({ note, onSave, onCancel }: NoteEditorProps) 
         <button
           type="button"
           onClick={onCancel}
-          className="px-5 py-2 rounded-lg font-medium transition-colors cursor-pointer"
+          className="flex-1 md:flex-none px-5 py-2.5 rounded-lg font-medium transition-colors cursor-pointer"
           style={{
             backgroundColor: "var(--border)",
             color: "var(--foreground)",
