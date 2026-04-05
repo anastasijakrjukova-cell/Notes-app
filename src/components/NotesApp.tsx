@@ -179,7 +179,7 @@ export default function NotesApp() {
           className="px-4 py-3 text-xs border-t shrink-0"
           style={{ borderColor: "var(--border)", color: "var(--muted)" }}
         >
-          Всего заметок: {notes.length}
+          Всего заметок: {notes.length} · v2.0
         </div>
       </aside>
 
