@@ -19,14 +19,22 @@ function loadNotes(): Note[] {
   if (typeof window === "undefined") return [];
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
+    if (!raw) return [];
+    return JSON.parse(raw).map((n: Record<string, unknown>) => ({
+      ...n,
+      images: Array.isArray(n.images) ? n.images : [],
+    }));
   } catch {
     return [];
   }
 }
 
 function saveNotes(notes: Note[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
+  } catch {
+    alert("Не удалось сохранить — слишком много данных. Удалите старые заметки или фото.");
+  }
 }
 
 type MobileView = "list" | "view" | "edit";
