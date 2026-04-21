@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import NotesList from "./NotesList";
 import NoteEditor from "./NoteEditor";
+import CalendarModal from "./CalendarModal";
 
 export interface Note {
   id: string;
@@ -57,6 +58,7 @@ export default function NotesApp() {
   const [search, setSearch] = useState("");
   const [loaded, setLoaded] = useState(false);
   const [mobileView, setMobileView] = useState<MobileView>("list");
+  const [showCalendar, setShowCalendar] = useState(false);
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -173,25 +175,50 @@ export default function NotesApp() {
             }}
           >
             <h1 style={{ fontSize: 18, fontWeight: "bold", margin: 0 }}>Записная книжка</h1>
-            <button
-              onClick={handleNew}
-              style={{
-                width: 40,
-                height: 40,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                borderRadius: 12,
-                backgroundColor: "var(--accent)",
-                color: "#fff",
-                fontSize: 20,
-                fontWeight: "bold",
-                border: "none",
-                cursor: "pointer",
-              }}
-            >
-              +
-            </button>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button
+                onClick={() => setShowCalendar(true)}
+                title="Добавить в календарь"
+                style={{
+                  width: 40,
+                  height: 40,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderRadius: 12,
+                  backgroundColor: "var(--background)",
+                  color: "var(--foreground)",
+                  border: "1px solid var(--border)",
+                  cursor: "pointer",
+                }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                  <line x1="16" y1="2" x2="16" y2="6" />
+                  <line x1="8" y1="2" x2="8" y2="6" />
+                  <line x1="3" y1="10" x2="21" y2="10" />
+                </svg>
+              </button>
+              <button
+                onClick={handleNew}
+                style={{
+                  width: 40,
+                  height: 40,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderRadius: 12,
+                  backgroundColor: "var(--accent)",
+                  color: "#fff",
+                  fontSize: 20,
+                  fontWeight: "bold",
+                  border: "none",
+                  cursor: "pointer",
+                }}
+              >
+                +
+              </button>
+            </div>
           </div>
 
           <div style={{ padding: "12px 16px", flexShrink: 0 }}>
@@ -330,6 +357,8 @@ export default function NotesApp() {
           )}
         </main>
       )}
+
+      {showCalendar && <CalendarModal onClose={() => setShowCalendar(false)} />}
     </div>
   );
 }
