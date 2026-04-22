@@ -126,12 +126,14 @@ export default function NotesApp() {
       const event = parseCalendarEvent(fullText);
       if (event) {
         setTimeout(() => {
-          const url = generateICSUrl(event);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = "event.ics";
-          a.click();
-          URL.revokeObjectURL(url);
+          const fmt = (d: Date) => d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+          const endDate = new Date(event.date.getTime() + event.duration * 60000);
+          const params = new URLSearchParams({
+            title: event.title,
+            start: fmt(event.date),
+            end: fmt(endDate),
+          });
+          window.location.href = `/api/calendar?${params}`;
         }, 500);
       }
     }
