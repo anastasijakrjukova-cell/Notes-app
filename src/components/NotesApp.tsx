@@ -140,9 +140,10 @@ export default function NotesApp() {
           window.open(`/api/calendar?${params}`, "_self");
         } else if (result.type === "email" && result.email) {
           const p = new URLSearchParams();
+          if (result.email.to) p.set("to", result.email.to);
           if (result.email.subject) p.set("subject", result.email.subject);
           if (result.email.body) p.set("body", result.email.body);
-          window.location.href = `mailto:${result.email.to || ""}?${p}`;
+          window.location.href = `googlegmail:///co?${p}`;
         }
       })
       .catch(() => {});
