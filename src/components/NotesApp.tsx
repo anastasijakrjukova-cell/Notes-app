@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
+import { supabase } from "@/lib/supabase";
 import NotesList from "./NotesList";
 import NoteEditor from "./NoteEditor";
 import CalendarModal from "./CalendarModal";
@@ -12,30 +13,6 @@ export interface Note {
   images: string[];
   createdAt: number;
   updatedAt: number;
-}
-
-const STORAGE_KEY = "notes-app-data";
-
-function loadNotes(): Note[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    return JSON.parse(raw).map((n: Record<string, unknown>) => ({
-      ...n,
-      images: Array.isArray(n.images) ? n.images : [],
-    }));
-  } catch {
-    return [];
-  }
-}
-
-function saveNotes(notes: Note[]) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
-  } catch {
-    alert("Не удалось сохранить — слишком много данных. Удалите старые заметки или фото.");
-  }
 }
 
 type MobileView = "list" | "view" | "edit";
@@ -51,7 +28,12 @@ function useIsMobile(breakpoint = 768) {
   return isMobile;
 }
 
-export default function NotesApp() {
+interface NotesAppProps {
+  userId: string;
+  onLogout: () => void;
+}
+
+export default function NotesApp({ userId, onLogout }: NotesAppProps) {
   const [notes, setNotes] = useState<Note[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
@@ -62,13 +44,27 @@ export default function NotesApp() {
   const isMobile = useIsMobile();
 
   useEffect(() => {
-    setNotes(loadNotes());
-    setLoaded(true);
-  }, []);
-
-  useEffect(() => {
-    if (loaded) saveNotes(notes);
-  }, [notes, loaded]);
+    supabase
+      .from("notes")
+      .select("*")
+      .eq("user_id", userId)
+      .order("updated_at", { ascending: false })
+      .then(({ data }) => {
+        if (data) {
+          setNotes(
+            data.map((n) => ({
+              id: n.id,
+              title: n.title,
+              content: n.content,
+              images: n.images || [],
+              createdAt: new Date(n.created_at).getTime(),
+              updatedAt: new Date(n.updated_at).getTime(),
+            }))
+          );
+        }
+        setLoaded(true);
+      });
+  }, [userId]);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -96,8 +92,14 @@ export default function NotesApp() {
     setMobileView("view");
   }, []);
 
-  const handleSave = useCallback((title: string, content: string, images: string[]) => {
+  const handleSave = useCallback(async (title: string, content: string, images: string[]) => {
+    const now = new Date().toISOString();
+
     if (selectedId) {
+      await supabase
+        .from("notes")
+        .update({ title, content, images, updated_at: now })
+        .eq("id", selectedId);
       setNotes((prev) =>
         prev.map((n) =>
           n.id === selectedId
@@ -106,16 +108,23 @@ export default function NotesApp() {
         )
       );
     } else {
-      const newNote: Note = {
-        id: crypto.randomUUID(),
-        title,
-        content,
-        images,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-      };
-      setNotes((prev) => [newNote, ...prev]);
-      setSelectedId(newNote.id);
+      const { data } = await supabase
+        .from("notes")
+        .insert({ user_id: userId, title, content, images, created_at: now, updated_at: now })
+        .select()
+        .single();
+      if (data) {
+        const newNote: Note = {
+          id: data.id,
+          title,
+          content,
+          images,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        };
+        setNotes((prev) => [newNote, ...prev]);
+        setSelectedId(data.id);
+      }
     }
     setEditing(false);
     setMobileView("list");
@@ -147,9 +156,10 @@ export default function NotesApp() {
         }
       })
       .catch(() => {});
-  }, [selectedId]);
+  }, [selectedId, userId]);
 
-  const handleDelete = useCallback((id: string) => {
+  const handleDelete = useCallback(async (id: string) => {
+    await supabase.from("notes").delete().eq("id", id);
     setNotes((prev) => prev.filter((n) => n.id !== id));
     if (selectedId === id) {
       setSelectedId(null);
@@ -176,6 +186,14 @@ export default function NotesApp() {
 
   const showSidebar = !isMobile || mobileView === "list";
   const showMain = !isMobile || mobileView !== "list";
+
+  if (!loaded) {
+    return (
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "var(--muted)" }}>
+        Загрузка...
+      </div>
+    );
+  }
 
   return (
     <div style={{ display: "flex", height: "100%", overflow: "hidden", backgroundColor: "var(--background)" }}>
@@ -204,6 +222,29 @@ export default function NotesApp() {
           >
             <h1 style={{ fontSize: 18, fontWeight: "bold", margin: 0 }}>Записная книжка</h1>
             <div style={{ display: "flex", gap: 8 }}>
+              <button
+                onClick={onLogout}
+                title="Выйти"
+                style={{
+                  width: 40,
+                  height: 40,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderRadius: 12,
+                  backgroundColor: "var(--background)",
+                  color: "var(--muted)",
+                  border: "1px solid var(--border)",
+                  cursor: "pointer",
+                  fontSize: 14,
+                }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                  <polyline points="16 17 21 12 16 7" />
+                  <line x1="21" y1="12" x2="9" y2="12" />
+                </svg>
+              </button>
               <button
                 onClick={() => setShowCalendar(true)}
                 title="Добавить в календарь"
@@ -285,7 +326,7 @@ export default function NotesApp() {
               flexShrink: 0,
             }}
           >
-            Всего заметок: {notes.length} · v3.0
+            Всего заметок: {notes.length} · v4.0
           </div>
         </aside>
       )}
